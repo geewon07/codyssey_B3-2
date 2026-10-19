@@ -15,9 +15,9 @@ from ai_gitgen.prompts import SYSTEM_PROMPT, build_prompt
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Git 변경 내용으로 커밋 메시지/PR 초안을 생성합니다.")
     parser.add_argument("command", choices=("commit", "pr"), help="생성할 문서 종류")
-    parser.add_argument("--model", default="gpt-4.1-mini", help="AI 모델 (기본: gpt-4.1-mini)")
+    parser.add_argument("--model", default="gpt-5-mini", help="AI 모델 (기본: gpt-5-mini)")
     parser.add_argument("--temperature", type=float, default=0.2, help="0~2 (기본: 0.2)")
-    parser.add_argument("--max-tokens", type=int, default=700, help="최대 생성 토큰 (기본: 700)")
+    parser.add_argument("--max-tokens", type=int, default=3000, help="최대 생성 토큰 (기본: 3000)")
     parser.add_argument("--safe-mode", action="store_true", help="민감정보 마스킹 및 diff 크기 제한")
     parser.add_argument("--reason", default="", help="변경 배경 (선택)")
     parser.add_argument("--requirements", default="", help="작업 요구사항 (선택)")

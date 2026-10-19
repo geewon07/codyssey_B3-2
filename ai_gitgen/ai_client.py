@@ -5,7 +5,7 @@ import json
 import urllib.error
 import urllib.request
 
-API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
+API_ENDPOINT = "https://copa.codyssey.kr/v1/chat/completions"
 
 
 class APIError(Exception):
@@ -16,14 +16,17 @@ def generate_json(api_key: str, model: str, temperature: float,
                   max_tokens: int, system: str, prompt: str) -> dict:
     payload = {
         "model": model,
-        "temperature": temperature,
         "max_completion_tokens": max_tokens,
-        "response_format": {"type": "json_object"},
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ],
     }
+
+    # GPT-5 계열에서는 temperature를 전달하지 않음
+    if not model.startswith("gpt-5"):
+        payload["temperature"] = temperature
+
     request = urllib.request.Request(
         API_ENDPOINT,
         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),

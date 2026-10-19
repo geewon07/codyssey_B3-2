@@ -1,6 +1,6 @@
 # AI GitGen — Git 변경 사항 기반 커밋/PR 초안 생성기
 
-Python 3.10 이상에서 실행하는 CLI 도구입니다. Git 변경 사항을 수집하고 OpenAI REST API를 한 번 호출해 **커밋 메시지 또는 PR 제목·본문 초안**을 터미널에 출력합니다. 실제 커밋, push, PR 등록은 하지 않습니다.
+Python 3.10 이상에서 실행하는 CLI 도구입니다. Git 변경 사항을 수집하고 코디세이 COPA의 OpenAI 호환 REST API를 한 번 호출해 **커밋 메시지 또는 PR 제목·본문 초안**을 터미널에 출력합니다. 실제 커밋, push, PR 등록은 하지 않습니다.
 
 ## 1. 주요 기능
 
@@ -23,7 +23,7 @@ ai-gitgen/
 │   ├── __init__.py
 │   ├── git_tools.py        # Git 변경 정보 수집과 safe-mode 처리
 │   ├── prompts.py          # 커밋/PR 프롬프트 구성
-│   ├── ai_client.py        # OpenAI REST API 요청·응답·오류 처리
+│   ├── ai_client.py        # OpenAI 호환 REST API 요청·응답·오류 처리
 │   └── output.py           # 생성 결과 길이·형식 검증 및 출력
 ├── tests/
 │   └── test_tool.py        # 오프라인 자동 테스트
@@ -36,7 +36,7 @@ ai-gitgen/
 
 ## 3. 설치 및 API 키 설정
 
-**필요한 것:** Python 3.10+, Git, OpenAI API 키. Python 표준 라이브러리만 사용하므로 외부 패키지는 설치할 필요가 없습니다. ChatGPT Plus와 OpenAI API 결제는 별개입니다.
+**필요한 것:** Python 3.10+, Git, 코디세이 COPA의 OpenAI 호환 API 키. Python 표준 라이브러리만 사용하므로 외부 패키지는 설치할 필요가 없습니다. 이 프로젝트는 `https://copa.codyssey.kr/v1/chat/completions`에 요청합니다.
 
 프로젝트 압축 파일을 풀고 **Git 저장소 루트**로 이동합니다.
 
@@ -53,13 +53,13 @@ git commit -m "chore: initial commit"
 macOS / Linux:
 
 ```bash
-export AI_API_KEY="YOUR_OPENAI_API_KEY"
+export AI_API_KEY="YOUR_CODYSSEY_API_KEY"
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:AI_API_KEY="YOUR_OPENAI_API_KEY"
+$env:AI_API_KEY="YOUR_CODYSSEY_API_KEY"
 ```
 
 API 키는 `.py`, `.env.example`, README, Git에 기록하지 마세요. 환경변수로만 입력하세요.
@@ -74,7 +74,7 @@ python3 main.py commit --safe-mode
 python3 main.py pr --safe-mode
 
 # 요청 파라미터 지정
-python3 main.py commit --model gpt-4.1-mini --temperature 0.2 --max-tokens 700 --safe-mode
+python3 main.py commit --model gpt-5-mini --max-tokens 3000 --safe-mode
 
 # 변경 이유·요구사항 전달
 python3 main.py pr --reason "에러 처리 개선" --requirements "인증 실패 안내 추가" --safe-mode
@@ -83,12 +83,12 @@ python3 main.py pr --reason "에러 처리 개선" --requirements "인증 실패
 python3 main.py --help
 ```
 
-- `--model`: API 모델 이름, 기본 `gpt-4.1-mini`
-- `--temperature`: 결과의 다양성에 영향을 주는 파라미터, 기본 `0.2` (0~2)
-- `--max-tokens`: 최대 출력 토큰, 기본 `700` (API 요청 시 `max_completion_tokens`로 전달)
+- `--model`: API 모델 이름, 기본 `gpt-5-mini` (코디세이 COPA 제공 모델)
+- `--temperature`: 결과 다양성에 영향을 주는 파라미터, CLI 기본 `0.2` (0~2). 현재 구현에서는 GPT-5 계열 모델에 이 파라미터를 전송하지 않습니다.
+- `--max-tokens`: 최대 생성 토큰 수, 기본 `3000` (API 요청 시 `max_completion_tokens`로 전달)
 - `--safe-mode`: diff에 포함된 대표적인 이메일/토큰/비밀값을 마스킹하고, 최대 파일 10개·200줄까지만 전송
 
-다른 모델 사용 시 모델이 JSON 형식 응답, temperature, 출력 토큰 파라미터를 지원하는지 확인해야 합니다.
+`gpt-5-mini` 모델로 실제 커밋 메시지 및 PR 초안 생성이 확인되었습니다. COPA API에서 `response_format` 요청 옵션이 HTTP 400을 반환하여 해당 옵션은 전송하지 않고, 프롬프트로 JSON 출력을 요청한 뒤 Python에서 JSON을 파싱·검증합니다. 따라서 모델이 JSON 외 텍스트를 반환하면 오류가 날 수 있습니다. 다른 모델 사용 시 각 요청 파라미터의 지원 여부를 확인하세요.
 
 ## 5. 출력 예시
 
@@ -97,7 +97,7 @@ python3 main.py --help
 ```text
 [INFO] Git status 수집 완료: 2개 항목 감지
 [INFO] Git diff 수집 완료: 2개 파일 패치 / 43줄
-[INFO] AI API 요청 중... (모델: gpt-4.1-mini)
+[INFO] AI API 요청 중... (모델: gpt-5-mini)
 [INFO] API 호출 횟수: 1
 [DONE] 커밋 메시지 생성 완료
 
@@ -192,4 +192,4 @@ git push -u origin main
 - **결과 검증:** AI 출력을 그대로 믿지 않고 제목 길이와 PR 섹션을 Python에서 확인합니다.
 - **안전 모드:** 외부 API에 Git 변경 내역을 전송하기 전에 일부 민감정보를 가리고 전송량을 제한합니다.
 
-**참고:** [OpenAI Chat Completions API](https://platform.openai.com/docs/api-reference/chat/create) · [API 키 관리](https://platform.openai.com/api-keys)
+**참고:** 코디세이 COPA API 콘솔의 **문서 → 코드 예제 → 텍스트(OpenAI)** 및 **API 키** 메뉴를 참고하세요. 요청 엔드포인트는 `https://copa.codyssey.kr/v1/chat/completions`입니다.
